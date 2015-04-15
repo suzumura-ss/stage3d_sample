@@ -55,6 +55,7 @@
   <!-- SWC Libraries -->
   <libraryPaths>
     <element path="lib\Alternativa3D.swc" />
+    <element path="lib\framework.swc" />
   </libraryPaths>
   <!-- External Libraries -->
   <externalLibraryPaths>

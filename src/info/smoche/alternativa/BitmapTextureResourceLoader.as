@@ -1,7 +1,5 @@
 package info.smoche.alternativa
 {
-	import alternativa.engine3d.resources.BitmapTextureResource;
-	import alternativa.engine3d.resources.TextureResource;
 	import flash.display.Bitmap;
 	import flash.display.BitmapData;
 	import flash.display.Loader;
@@ -20,7 +18,6 @@ package info.smoche.alternativa
 	public class BitmapTextureResourceLoader 
 	{
 		static public var flipH:Boolean = false;		// 水平反転させる場合は true
-		static public var useMipmap:Boolean = false;	// Mipmapを生成する場合は true
 		static public var useExtendedProfile:Boolean = false; // Context3DProfile.BASELINE_EXTENDED なら true
 		
 		public function BitmapTextureResourceLoader()
@@ -35,8 +32,7 @@ package info.smoche.alternativa
 		 * 		それ以外の場合はHTTPリクエストで画像を取得します。
 		 * @param	result
 		 * 		画像を取得してテクスチャリソースを生成できたらコールバックします。
-		 * 		useMipmap = true のときは BitmapTextureResource を、
-		 * 		useMipmap = false のときは NonMipmapBitmapTextureResource を引数にとります。
+		 * 		NonMipmapBitmapTextureResource を引数にとります。
 		 * @param	onerror
 		 * 		エラーが起きた場合にコールバックします。
 		 * 		文字列か Errorクラスを引数にとります。
@@ -54,11 +50,7 @@ package info.smoche.alternativa
 				if (flipH) {
 					bmp = NonMipmapBitmapTextureResource.flipImage(bmp);
 				}
-				if (useMipmap) {
-					result(new BitmapTextureResource(bmp, true));
-				} else {
-					result(new NonMipmapBitmapTextureResource(bmp, false, true, useExtendedProfile));
-				}
+				result(new NonMipmapBitmapTextureResource(bmp, false, true, useExtendedProfile));
 			});
 			loader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, function(e:IOErrorEvent):void {
 				onerror(e);

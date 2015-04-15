@@ -38,6 +38,7 @@
     </source-path>
     <library-path append="true">
       <path-element>Z:\terasita\github\suzumura\stage3d_sample\lib\Alternativa3D.swc</path-element>
+      <path-element>Z:\terasita\github\suzumura\stage3d_sample\lib\framework.swc</path-element>
     </library-path>
   </compiler>
   <file-specs>
