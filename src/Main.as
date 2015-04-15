@@ -74,7 +74,6 @@ package
 		
 		private function onContent3DCreate(e:Event):void
 		{
-			_stage3d.removeEventListener(Event.CONTEXT3D_CREATE, onContent3DCreate);
 			_stage3d.removeEventListener(ErrorEvent.ERROR, onContent3DCreateError);
 			_extended3dEnabled = (_profiles[0] != Context3DProfile.BASELINE);
 			Utils.Trace("Alternativa3D.version: " + Alternativa3D.version);
@@ -111,7 +110,9 @@ package
 			
 			uploadResouces();
 			stage.addEventListener(Event.ENTER_FRAME, onEnterFrame);
-			stage.addEventListener(Event.RESIZE, onResize);
+			if (!stage.hasEventListener(Event.RESIZE)) {
+				stage.addEventListener(Event.RESIZE, onResize);
+			}
 		}
 		
 		private function uploadResouces():void
@@ -123,8 +124,14 @@ package
 		
 		private function onEnterFrame(e:Event):void
 		{
-			_controller.update();
-			_camera.render(_stage3d)
+			if (_stage3d.context3D == null) {
+				Utils.Trace("Context3D is lost.");
+				stage.removeEventListener(Event.ENTER_FRAME, onEnterFrame);
+				_stage3d.requestContext3D(Context3DRenderMode.AUTO, _profiles[0]);
+			} else {
+				_controller.update();
+				_camera.render(_stage3d)
+			}
 		}
 		
 		private function onResize(e:Event):void
