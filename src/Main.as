@@ -1,5 +1,6 @@
 package 
 {
+	import alternativa.Alternativa3D;
 	import alternativa.engine3d.controllers.SimpleObjectController;
 	import alternativa.engine3d.core.Camera3D;
 	import alternativa.engine3d.core.Object3D;
@@ -76,6 +77,7 @@ package
 			_stage3d.removeEventListener(Event.CONTEXT3D_CREATE, onContent3DCreate);
 			_stage3d.removeEventListener(ErrorEvent.ERROR, onContent3DCreateError);
 			_extended3dEnabled = (_profiles[0] != Context3DProfile.BASELINE);
+			Utils.Trace("Alternativa3D.version: " + Alternativa3D.version);
 			Utils.Trace("Using Context3DProfile: " + _profiles[0]);
 			
 			var htmlParams:Object = LoaderInfo(root.loaderInfo).parameters;
