@@ -33,7 +33,13 @@ package
 		private var _root:Object3D;
 		private var _controller:SimpleObjectController;
 		private var _camera:Camera3D;
-		private var _extended3dEnabled:Boolean = true;
+		private var _profiles:Vector.<String> = Vector.<String>([
+			//Context3DProfile.STANDARD_EXTENDED,
+			//Context3DProfile.STANDARD_CONSTRAINED,
+			Context3DProfile.BASELINE_EXTENDED,
+			Context3DProfile.BASELINE
+		]);
+		private var _extended3dEnabled:Boolean = false;
 		
 		public function Main():void 
 		{
@@ -49,34 +55,32 @@ package
 			stage.scaleMode = StageScaleMode.NO_SCALE;
 			_stage3d = stage.stage3Ds[0];
 			_stage3d.addEventListener(Event.CONTEXT3D_CREATE, onContent3DCreate);
-			_stage3d.addEventListener(ErrorEvent.ERROR, onContent3DExtendCreateError);
-			_stage3d.requestContext3D(Context3DRenderMode.AUTO, Context3DProfile.BASELINE_EXTENDED);
-		}
-		
-		private function onContent3DExtendCreateError(e:ErrorEvent):void
-		{
-			Utils.Trace("Create Context3DProfile.BASELINE_EXTENDED failed.");
-			_extended3dEnabled = false;
-			_stage3d.removeEventListener(ErrorEvent.ERROR, onContent3DExtendCreateError);
 			_stage3d.addEventListener(ErrorEvent.ERROR, onContent3DCreateError);
-			_stage3d.requestContext3D(Context3DRenderMode.AUTO, Context3DProfile.BASELINE);
+			while (_profiles[0] == null) {
+				_profiles.shift();
+			}
+			_stage3d.requestContext3D(Context3DRenderMode.AUTO, _profiles[0]);
 		}
 		
 		private function onContent3DCreateError(e:ErrorEvent):void
 		{
-			Utils.Trace("Create Context3DProfile.BASELINE failed.");
-			_stage3d.removeEventListener(ErrorEvent.ERROR, onContent3DCreateError);
+			Utils.Trace("Create failed: " + _profiles[0]);
+			_profiles.shift();
+			if (_profiles.length > 0) {
+				_stage3d.requestContext3D(Context3DRenderMode.AUTO, _profiles[0]);
+			}
 		}
 		
 		private function onContent3DCreate(e:Event):void
 		{
 			_stage3d.removeEventListener(Event.CONTEXT3D_CREATE, onContent3DCreate);
-			_stage3d.removeEventListener(ErrorEvent.ERROR, onContent3DExtendCreateError);
 			_stage3d.removeEventListener(ErrorEvent.ERROR, onContent3DCreateError);
+			_extended3dEnabled = (_profiles[0] != Context3DProfile.BASELINE);
+			Utils.Trace("Using Context3DProfile: " + _profiles[0]);
 			
 			var htmlParams:Object = LoaderInfo(root.loaderInfo).parameters;
 			var imageName:String = htmlParams["source"] || "forest.jpg";
-			Utils.Trace(["source", imageName]);
+			Utils.Trace("Source: " + imageName);
 			
 			_root = new Object3D();
 			_camera = new Camera3D(0.01, 100000000);
@@ -92,6 +96,7 @@ package
 			_controller.lookAt(new LookAt3D());
 			
 			BitmapTextureResourceLoader.flipH = false;
+			BitmapTextureResourceLoader.useExtendedProfile = _extended3dEnabled;
 			BitmapTextureResourceLoader.loadURL(imageName, function(tr:NonMipmapBitmapTextureResource):void {
 				var m:Mesh = new GeoSphere(2000, 4, true);
 				var t:NonMipmapTextureMaterial = new NonMipmapTextureMaterial(tr, 1, _stage3d.context3D);

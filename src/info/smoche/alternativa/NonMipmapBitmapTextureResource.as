@@ -7,6 +7,7 @@ package info.smoche.alternativa
 	import flash.display3D.Context3DTextureFormat;
 	import flash.display3D.textures.Texture;
 	import flash.geom.Matrix;
+	import info.smoche.utils.Utils;
 	
 	use namespace alternativa3d;
 	/**
@@ -19,6 +20,7 @@ package info.smoche.alternativa
 		protected var _data:BitmapData;
 		protected var _flipH:Boolean = false;
 		protected var _resizeForGPU:Boolean = true;
+		protected var _extendedProfile:Boolean = false;
 		
 		/**
 		 * 
@@ -26,11 +28,12 @@ package info.smoche.alternativa
 		 * @param	flipH			左右に反転させる場合は true
 		 * @param	resizeForGPU	2^nにリサイズする場合は true
 		 */
-		public function NonMipmapBitmapTextureResource(bitmapData:BitmapData, flipH:Boolean = false, resizeForGPU:Boolean = true)
+		public function NonMipmapBitmapTextureResource(bitmapData:BitmapData, flipH:Boolean = false, resizeForGPU:Boolean = true, extendedProfile:Boolean = false)
 		{
 			_data = bitmapData;
 			_flipH = flipH;
 			_resizeForGPU = resizeForGPU;
+			_extendedProfile = extendedProfile;
 		}
 		
 		override public function upload(context3D:Context3D):void
@@ -39,7 +42,7 @@ package info.smoche.alternativa
 				_texture.dispose();
 			}
 			if (_resizeForGPU) {
-				_data = resizeImage2n(_data);
+				_data = resizeImage2n(_data, _extendedProfile);
 			}
 			if (_flipH) {
 				_data = flipImage(_data);
@@ -49,15 +52,16 @@ package info.smoche.alternativa
 			Texture(_texture).uploadFromBitmapData(_data, 0);
 		}
 		
-		static public function resizeImage2n(source:BitmapData):BitmapData
+		static public function resizeImage2n(source:BitmapData, extendedProfile:Boolean):BitmapData
 		{
 			var wLog2Num:Number = Math.log(source.width)/Math.LN2;
 			var hLog2Num:Number = Math.log(source.height)/Math.LN2;
 			var wLog2:int = Math.ceil(wLog2Num);
 			var hLog2:int = Math.ceil(hLog2Num);
-			if (wLog2 != wLog2Num || hLog2 != hLog2Num || wLog2 > 11 || hLog2 > 11) {
-				wLog2 = (wLog2 > 11) ? 11 : wLog2;
-				hLog2 = (hLog2 > 11) ? 11 : hLog2;
+			var lim:int = extendedProfile ? 12 : 11;
+			if (wLog2 != wLog2Num || hLog2 != hLog2Num || wLog2 > lim || hLog2 > lim) {
+				wLog2 = (wLog2 > lim) ? lim : wLog2;
+				hLog2 = (hLog2 > lim) ? lim : hLog2;
 				var bitmap:BitmapData = new BitmapData(1 << wLog2, 1 << hLog2, source.transparent, 0);
 				const mat:Matrix = new Matrix(1, 0, 0, 1);
 				mat.a = (1 << wLog2)/source.width;

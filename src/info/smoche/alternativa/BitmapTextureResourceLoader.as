@@ -21,6 +21,7 @@ package info.smoche.alternativa
 	{
 		static public var flipH:Boolean = false;		// 水平反転させる場合は true
 		static public var useMipmap:Boolean = false;	// Mipmapを生成する場合は true
+		static public var useExtendedProfile:Boolean = false; // Context3DProfile.BASELINE_EXTENDED なら true
 		
 		public function BitmapTextureResourceLoader()
 		{
@@ -56,7 +57,7 @@ package info.smoche.alternativa
 				if (useMipmap) {
 					result(new BitmapTextureResource(bmp, true));
 				} else {
-					result(new NonMipmapBitmapTextureResource(bmp));
+					result(new NonMipmapBitmapTextureResource(bmp, false, true, useExtendedProfile));
 				}
 			});
 			loader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, function(e:IOErrorEvent):void {
