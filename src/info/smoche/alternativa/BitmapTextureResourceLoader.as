@@ -7,6 +7,7 @@ package info.smoche.alternativa
 	import flash.events.IOErrorEvent;
 	import flash.external.ExternalInterface;
 	import flash.net.URLRequest;
+	import flash.system.LoaderContext;
 	import flash.utils.ByteArray;
 	import mx.utils.Base64Decoder;
 	/**
@@ -39,13 +40,14 @@ package info.smoche.alternativa
 		 */
 		static public function loadURL(url:String, result:Function, onerror:Function):void
 		{
+			var loaderContext:LoaderContext = null;
 			var loader:Loader = new Loader();
 			loader.contentLoaderInfo.addEventListener(Event.COMPLETE, function(e:Event):void {
 				try {
 					var bmp:BitmapData = (e.target.content as Bitmap).bitmapData;
-				} catch (e:SecurityError) {
-					onerror(e);
-					return;
+				} catch (se:SecurityError) {
+					onerror(se);
+                    return;
 				}
 				if (flipH) {
 					bmp = NonMipmapBitmapTextureResource.flipImage(bmp);
@@ -82,7 +84,8 @@ package info.smoche.alternativa
 					onerror(e);
 				}
 			} else if (url.length > 0) {
-				loader.load(new URLRequest(url));
+				loaderContext = new LoaderContext(true);
+				loader.load(new URLRequest(url), loaderContext);
 			} else {
 				onerror("Empty data.");
 			}

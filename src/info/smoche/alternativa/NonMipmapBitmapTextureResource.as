@@ -48,6 +48,7 @@ package info.smoche.alternativa
 				_data = flipImage(_data);
 				_flipH = false;
 			}
+			trace("bitmap size", _data.width, _data.height);
 			_texture = context3D.createTexture(_data.width, _data.height, Context3DTextureFormat.BGRA, false);
 			Texture(_texture).uploadFromBitmapData(_data, 0);
 		}

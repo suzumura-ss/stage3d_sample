@@ -17,6 +17,8 @@ package
 	import flash.display3D.Context3DRenderMode;
 	import flash.events.ErrorEvent;
 	import flash.events.Event;
+	import flash.external.ExternalInterface;
+	import flash.system.Security;
 	import info.smoche.alternativa.BitmapTextureResourceLoader;
 	import info.smoche.alternativa.NonMipmapBitmapTextureResource;
 	import info.smoche.alternativa.NonMipmapTextureMaterial;
@@ -34,6 +36,7 @@ package
 		private var _root:Object3D;
 		private var _controller:SimpleObjectController;
 		private var _camera:Camera3D;
+		private var _mesh:Mesh;
 		private var _profiles:Vector.<String> = Vector.<String>([
 			//Context3DProfile.STANDARD_EXTENDED,
 			//Context3DProfile.STANDARD_CONSTRAINED,
@@ -41,6 +44,12 @@ package
 			Context3DProfile.BASELINE
 		]);
 		private var _extended3dEnabled:Boolean = false;
+		private var _startClock:Number = 0;
+		
+		private function lap():String
+		{
+			return ((new Date()).valueOf() - _startClock).toString();
+		}
 		
 		public function Main():void 
 		{
@@ -80,7 +89,10 @@ package
 			Utils.Trace("Using Context3DProfile: " + _profiles[0]);
 			
 			var htmlParams:Object = LoaderInfo(root.loaderInfo).parameters;
-			var imageName:String = htmlParams["source"] || "forest.jpg";
+			var imageName:String = htmlParams["source"] || "m20-moire-R721.JPG";
+			var onReadyJS:String = htmlParams["onReady"] || "";
+			_startClock = Number(htmlParams["startClock"] || "0");
+			Utils.Trace("=== Initializing: " + lap());
 			Utils.Trace("Source: " + imageName);
 			
 			_root = new Object3D();
@@ -88,6 +100,9 @@ package
 			_camera.view = new View(stage.stageWidth, stage.stageHeight, false, 0x202020, 0, 4);
 			addChild(_camera.view);
 			addChild(_camera.diagram);
+			
+			_mesh = new GeoSphere(2000, 8, true);
+			_root.addChild(_mesh);
 			
 			_root.addChild(_camera);
 			_controller = new SimpleObjectController(stage, _camera, 200, 3, -0.1);
@@ -98,21 +113,16 @@ package
 			
 			BitmapTextureResourceLoader.flipH = false;
 			BitmapTextureResourceLoader.useExtendedProfile = _extended3dEnabled;
-			BitmapTextureResourceLoader.loadURL(imageName, function(tr:NonMipmapBitmapTextureResource):void {
-				var m:Mesh = new GeoSphere(2000, 4, true);
-				var t:NonMipmapTextureMaterial = new NonMipmapTextureMaterial(tr, 1, _stage3d.context3D);
-				m.setMaterialToAllSurfaces(t);
-				_root.addChild(m);
-				uploadResouces();
-			}, function(e:Error):void {
-				Utils.Trace(e);
-			});
-			
+			if (imageName != "") {
+				loadImageFromDataURL(imageName);
+			}
 			uploadResouces();
 			stage.addEventListener(Event.ENTER_FRAME, onEnterFrame);
 			if (!stage.hasEventListener(Event.RESIZE)) {
 				stage.addEventListener(Event.RESIZE, onResize);
 			}
+			
+			onReady(onReadyJS);
 		}
 		
 		private function uploadResouces():void
@@ -138,6 +148,37 @@ package
 		{
 			_camera.view.width = stage.stageWidth;
 			_camera.view.height = stage.stageHeight;
+		}
+		
+		private function onReady(js:String):void
+		{
+			if (ExternalInterface.available) {
+				ExternalInterface.addCallback("loadImage", function(r:String):void {
+					Utils.Trace("javascript::loadImage: loading: " + lap());
+					loadImageFromDataURL(r);
+				});
+				Utils.Trace("onReady: " + js);
+				var r:String = ExternalInterface.call(js);
+				var s:String = r.split(":")[0];
+				if (s == "data") {
+					loadImageFromDataURL(r);
+				} else {
+					Utils.Trace("onReady: " + js + " => " + r);
+				}
+			}
+		}
+		
+		private function loadImageFromDataURL(dataURL:String):void
+		{
+			Utils.Trace("=== Loading Texture: " + dataURL.split(":")[0] + ": " + lap());
+			BitmapTextureResourceLoader.loadURL(dataURL, function(tr:NonMipmapBitmapTextureResource):void {
+				var t:NonMipmapTextureMaterial = new NonMipmapTextureMaterial(tr, 1, _stage3d.context3D);
+				_mesh.setMaterialToAllSurfaces(t);
+				uploadResouces();
+				Utils.Trace("=== Texture Ready: " + dataURL.split(":")[0] + ": " + lap());
+			}, function(se:SecurityError):void {
+				Utils.Trace("BitmapTextureResourceLoader.loadURL failed:" + se);
+			});
 		}
 	}
 }

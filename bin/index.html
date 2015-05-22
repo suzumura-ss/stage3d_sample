@@ -5,10 +5,17 @@
 	<title>stage3d_samples</title>
 	<meta name="description" content="" />
 	
-	<script src="js/swfobject.js"></script>
+	<script src="js/swfobject.js" type="text/javascript"></script>
+	<script src="js/jquery.min.js" type="text/javascript"></script>
 	<script>
+        var js_image = "<not ready>";
+        var swf_ready = false;
+        var START = new Date();
+
 		var flashvars = {
-			source: "forest.jpg"
+			source: "http://s3-ap-northeast-1.amazonaws.com/terasita-video-test/forest.jpg",
+            onReady: "onReady",
+            startClock: START.valueOf()
 		};
 		var params = {
 			menu: "false",
@@ -21,11 +28,46 @@
 		var attributes = {
 			id:"stage3dsample"
 		};
+
+        console.log("=== Loading SWF: " + ((new Date())-START));
 		swfobject.embedSWF(
 			"stage3dsample.swf", 
 			"altContent", "100%", "100%", "10.0.0", 
 			"expressInstall.swf", 
 			flashvars, params, attributes);
+
+        
+        console.log("=== Loading Image/JS: " + ((new Date())-START));
+        var canvas = $(document.createElement("canvas"));
+        canvas.hide();
+        var img = new Image();
+        img.onload = function() {
+          var cv = canvas[0];
+          cv.width = img.width;
+          cv.height = img.height;
+          var ctx = cv.getContext('2d');
+          ctx.drawImage(img, 0, 0, img.width, img.height);
+          var png = cv.toDataURL();
+          canvas.remove();
+          console.log("=== Image/JS Ready: " + ((new Date())-START));
+          if (swf_ready) {
+              $("#stage3dsample")[0].loadImage(png);
+          } else {
+              console.log("Image/JS Pending.");
+              js_image = png;
+          }
+        };
+        img.onerror = function() {
+          console.log("image load failed.");
+        };
+        img.src = "R0013550_ADJ.JPG";
+
+        function onReady()
+        {
+            console.log("=== SWF Ready: " + ((new Date())-START));
+            swf_ready = true;
+            return js_image;
+        }
 	</script>
 	<style>
 		html, body { height:100%; overflow:hidden; }
