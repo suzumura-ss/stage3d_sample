@@ -10,6 +10,7 @@ package info.smoche.alternativa
 	import alternativa.engine3d.materials.Material;
 	import alternativa.engine3d.materials.ShaderProgram;
 	import alternativa.engine3d.objects.Surface;
+	import alternativa.engine3d.resources.BitmapTextureResource;
 	import alternativa.engine3d.resources.Geometry;
 	import alternativa.engine3d.resources.TextureResource;
 	import com.adobe.utils.AGALMiniAssembler;
@@ -26,7 +27,8 @@ package info.smoche.alternativa
 	 */
 	public class NonMipmapTextureMaterial extends Material
 	{
-		private var _texture:TextureResource;
+		private var _texture:NonMipmapBitmapTextureResource;
+		private var _mipmapTexture:BitmapTextureResource;
 		private var _context3d:Context3D;
 		private var _program:ShaderProgram = new ShaderProgram(null, null);
 		private var _vertexShaderAssembler:AGALMiniAssembler = new AGALMiniAssembler();
@@ -39,9 +41,10 @@ package info.smoche.alternativa
 		 * @param	alpha		表示アルファ
 		 * @param	context3d
 		 */
-		public function NonMipmapTextureMaterial(texture:TextureResource, alpha:Number, context3d:Context3D)
+		public function NonMipmapTextureMaterial(texture:NonMipmapBitmapTextureResource, mipmapTexture:BitmapTextureResource, alpha:Number, context3d:Context3D)
 		{
 			_texture = texture;
+			_mipmapTexture = mipmapTexture;
 			this.alpha = alpha;
 			_context3d = context3d;
 			
@@ -51,7 +54,15 @@ package info.smoche.alternativa
 			].join("\n"));
 			
 			_fragmentShaderAssembler.assemble(Context3DProgramType.FRAGMENT, [
-				"tex ft0, v0, fs0 <2d,linear,repeat>", // oc = sampler2d(fs0, v0[uv])
+				"tex ft0, v0, fs0 <2d,linear,repeat,nomip>", // oc = sampler2d(fs0, v0[uv])
+				"tex ft1, v0, fs1 <2d,linear,repeat,miplinear>",
+				"mul ft1.xyz, ft1.xyz, fc0.z", //　半輝度
+				
+				"sge ft2.x, v0.y, fc0.z",	//   ft2 = (v0.y >= 0.5) ? 1:0;
+				"slt ft3.x, v0.y, fc0.z",	//   ft3 = (v0.y < 0.5) ? 1:0;
+				"mul ft0, ft0, ft2.x",
+				"mul ft1, ft1, ft3.x",
+				"add ft0, ft0, ft1",
 				"mov ft0.w, fc0.x",
 				"mov oc, ft0",
 			].join("\n"));
@@ -63,6 +74,9 @@ package info.smoche.alternativa
 			
 			if (_texture != null) {
 				resources[_texture] = true;
+			}
+			if (_mipmapTexture != null) {
+				resources[_mipmapTexture] = true;
 			}
 			_program.program = _context3d.createProgram();
 			_program.program.upload(_vertexShaderAssembler.agalcode, _fragmentShaderAssembler.agalcode);
@@ -78,8 +92,9 @@ package info.smoche.alternativa
 			drawUnit.setProjectionConstants(camera, 0, object.localToCameraTransform);	// = vc0
 			drawUnit.setVertexBufferAt(0, posBuffer, 0, "float3");						// = va0
 			drawUnit.setVertexBufferAt(1, uvBuffer,  3, "float2");						// = va1
-			drawUnit.setFragmentConstantsFromNumbers(0, alpha, 0, 0, 0);				// = fc0
+			drawUnit.setFragmentConstantsFromNumbers(0, alpha, 0, 0.5, 0);				// = fc0
 			drawUnit.setTextureAt(0, _texture._texture);								// = fs0
+			drawUnit.setTextureAt(1, _mipmapTexture._texture);							// = fs1
 			drawUnit.blendSource = Context3DBlendFactor.SOURCE_ALPHA;
 			drawUnit.blendDestination = Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA;
 			camera.renderer.addDrawUnit(drawUnit, (objectRenderPriority >= 0)? objectRenderPriority: Renderer.OPAQUE);

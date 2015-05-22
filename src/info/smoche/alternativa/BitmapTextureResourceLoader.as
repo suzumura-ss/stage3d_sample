@@ -1,5 +1,6 @@
 package info.smoche.alternativa
 {
+	import alternativa.engine3d.resources.BitmapTextureResource;
 	import flash.display.Bitmap;
 	import flash.display.BitmapData;
 	import flash.display.Loader;
@@ -52,7 +53,8 @@ package info.smoche.alternativa
 				if (flipH) {
 					bmp = NonMipmapBitmapTextureResource.flipImage(bmp);
 				}
-				result(new NonMipmapBitmapTextureResource(bmp, false, true, useExtendedProfile));
+				var bmp2:BitmapData = bmp.clone();
+				result(new NonMipmapBitmapTextureResource(bmp2, false, true, useExtendedProfile), new BitmapTextureResource(bmp, true));
 			});
 			loader.contentLoaderInfo.addEventListener(IOErrorEvent.IO_ERROR, function(e:IOErrorEvent):void {
 				onerror(e);

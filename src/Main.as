@@ -8,6 +8,7 @@ package
 	import alternativa.engine3d.core.View;
 	import alternativa.engine3d.objects.Mesh;
 	import alternativa.engine3d.primitives.GeoSphere;
+	import alternativa.engine3d.resources.BitmapTextureResource;
 	import flash.display.LoaderInfo;
 	import flash.display.Sprite;
 	import flash.display.Stage3D;
@@ -171,8 +172,8 @@ package
 		private function loadImageFromDataURL(dataURL:String):void
 		{
 			Utils.Trace("=== Loading Texture: " + dataURL.split(":")[0] + ": " + lap());
-			BitmapTextureResourceLoader.loadURL(dataURL, function(tr:NonMipmapBitmapTextureResource):void {
-				var t:NonMipmapTextureMaterial = new NonMipmapTextureMaterial(tr, 1, _stage3d.context3D);
+			BitmapTextureResourceLoader.loadURL(dataURL, function(tr:NonMipmapBitmapTextureResource, tr2:BitmapTextureResource):void {
+				var t:NonMipmapTextureMaterial = new NonMipmapTextureMaterial(tr, tr2, 1, _stage3d.context3D);
 				_mesh.setMaterialToAllSurfaces(t);
 				uploadResouces();
 				Utils.Trace("=== Texture Ready: " + dataURL.split(":")[0] + ": " + lap());
